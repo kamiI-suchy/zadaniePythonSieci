@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pl"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Programowanie w Pythonie w środowisku sieciowym (cz. 1)</title>
+<link rel="stylesheet" type="text/css" media="all" href="Programowanie%20w%20Pythonie%20w%20%C5%9Brodowisku%20sieciowym%20(cz.%201)_files/jquery-ui.css">
+<link rel="stylesheet" type="text/css" media="all" href="Programowanie%20w%20Pythonie%20w%20%C5%9Brodowisku%20sieciowym%20(cz.%201)_files/styles.css">
+<link rel="stylesheet" type="text/css" media="all" href="Programowanie%20w%20Pythonie%20w%20%C5%9Brodowisku%20sieciowym%20(cz.%201)_files/highlight.min.css">
+<script type="text/javascript" src="Programowanie%20w%20Pythonie%20w%20%C5%9Brodowisku%20sieciowym%20(cz.%201)_files/jquery.js"></script>
+<script type="text/javascript" src="Programowanie%20w%20Pythonie%20w%20%C5%9Brodowisku%20sieciowym%20(cz.%201)_files/jquery-ui.js"></script>
+<script type="text/javascript" src="Programowanie%20w%20Pythonie%20w%20%C5%9Brodowisku%20sieciowym%20(cz.%201)_files/main.js"></script>
+<script type="text/javascript" src="Programowanie%20w%20Pythonie%20w%20%C5%9Brodowisku%20sieciowym%20(cz.%201)_files/eth.js"></script>
+<script type="text/javascript" src="Programowanie%20w%20Pythonie%20w%20%C5%9Brodowisku%20sieciowym%20(cz.%201)_files/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</head>
+<body>
+<h1>Programowanie w Pythonie w środowisku sieciowym (cz. 1)</h1>
+
+<fieldset id="toc_fieldset"><legend>Zagadnienia</legend><div id="toc_div"><ol id="toc"><li><a href="#h2_1">Gniazda</a></li><li><a href="#h2_2">Interfejs API gniazd</a></li><li><a href="#h2_3">Gniazda TCP</a></li><li><a href="#h2_4">Klient i serwer Echo</a></li><li><a href="#h2_5">Klient Echo</a></li><li><a href="#h2_6">Komunikacja klient-serwer</a></li></ol></div></fieldset>
+<div style="clear: both;"></div>
+
+<h2 id="h2_1"><a class="up" href="#" title="Powrót do góry">▲</a>Gniazda</h2>
+<p>Gniazda (sockets) oraz interfejs API gniazd służą do wysyłania 
+wiadomości przez sieć. Zapewniają formę komunikacji międzyprocesowej 
+(IPC). Sieć może być logiczną, lokalną siecią dla komputera lub 
+fizycznie połączoną z siecią zewnętrzną, z własnymi połączeniami z 
+innymi sieciami. Oczywistym przykładem jest Internet, z którym łączysz 
+się za pośrednictwem usługodawcy internetowego. Gniazda mają długą 
+historię. Najpopularniejszym rodzajem aplikacji gniazdowych są aplikacje
+ klient-serwer, w których jedna strona działa jak serwer i czeka na 
+połączenia od klientów. Ten rodzaj aplikacji zostanie tutaj omówiony. 
+Mówiąc dokładniej, przyjrzymy się API gniazda dla gniazd internetowych, 
+czasami nazywanych gniazdami Berkeley lub BSD. Istnieją również gniazda 
+domeny Unix, których można używać tylko do komunikacji między procesami 
+na tym samym hoście.</p>
+
+<h2 id="h2_2"><a class="up" href="#" title="Powrót do góry">▲</a>Interfejs API gniazd</h2>
+<p>Podstawowe funkcje i metody API gniazd w tym module to: socket(), 
+bind(), listen(), accept(), connect(), connect_ex(), send(), recv() oraz
+ close(). Python zapewnia wygodny i spójny interfejs API, który 
+odwzorowuje bezpośrednio na te wywołania systemowe, ich odpowiedniki w 
+języku C. W ramach standardowej biblioteki Python posiada również klasy,
+ które ułatwiają korzystanie z tych funkcji gniazd niskiego poziomu. 
+Chociaż nie będzie to tutaj omówione, zobacz <a href="https://docs.python.org/3/library/socketserver.html" target="_blank">moduł socketserver</a>,
+ framework dla serwerów sieciowych. Dostępnych jest również wiele 
+modułów, które implementują protokoły internetowe wyższego poziomu, 
+takie jak HTTP i SMTP. Aby uzyskać przegląd, zobacz <a href="https://docs.python.org/3/library/internet.html" target="_blank">Protokoły internetowe i wsparcie</a>.</p>
+
+<h2 id="h2_3"><a class="up" href="#" title="Powrót do góry">▲</a>Gniazda TCP</h2>
+
+<p>
+Jak wkrótce zobaczymy, utworzymy obiekt gniazda za pomocą <i>socket.socket()</i> i określmy typ gniazda jako <i>socket.SOCK_STREAM</i>. Domyślnym używanym protokołem jest <a href="https://en.wikipedia.org/wiki/Transmission_Control_Protocol" target="_blank">Protokół kontroli transmisji (TCP)</a>.Dlaczego warto korzystać z TCP? Protokół kontroli transmisji (TCP):
+</p><ul>
+	<li><b>Jest niezawodny</b>: pakiety utracone w sieci są wykrywane i retransmitowane przez nadawcę</li>
+	<li><b>Dostarcza dane w kolejności</b>: dane są odczytywane przez aplikację w kolejności, w jakiej zostały zapisane przez nadawcę</li>
+</ul>
+
+W przeciwieństwie do TCP, utworzone gniazda <a href="https://en.wikipedia.org/wiki/User_Datagram_Protocol" target="_blank">UDP (User Datagram Protocol)</a> przy pomocy <i>socket.SOCK_DGRAM</i>
+ nie są niezawodne, a dane odczytane przez odbiorcę mogą być odczytane w
+ nieprawidłowej kolejności. Dlaczego to jest ważne? Sieci są najlepszym 
+systemem dostarczania. Nie ma gwarancji, że Twoje dane dotrą do miejsca 
+docelowego lub że otrzymasz to, co zostało do Ciebie wysłane. Urządzenia
+ sieciowe (na przykład routery i przełączniki) mają dostępną ograniczoną
+ szerokość pasma i własne ograniczenia systemowe. Mają procesory, 
+pamięć, magistrale i bufory pakietów interfejsów, podobnie jak nasi 
+klienci i serwery. TCP odciąża od konieczności martwienia się o utratę 
+pakietów, dane przychodzące poza kolejnością i wiele innych rzeczy, 
+które niezmiennie zdarzają się, gdy komunikujesz się przez sieć. Na 
+poniższym diagramie spójrzmy na sekwencję wywołań API gniazd i przepływ 
+danych dla TCP.
+<p></p>
+
+<div class="img" alt="Rys. 1. Przepływ w gniazdach TCP" title="Rys. 1. Przepływ w gniazdach TCP"><img class="frame center" src="Programowanie%20w%20Pythonie%20w%20%C5%9Brodowisku%20sieciowym%20(cz.%201)_files/sockets_tcp_flow.jpg"></div>
+<div class="img_text">Rys. 1. Przepływ w gniazdach TCP</div>
+
+<p>
+Lewa kolumna reprezentuje serwer. Po prawej stronie jest klient. 
+Zaczynając od lewej górnej kolumny, zwróć uwagę na wywołania API, które 
+serwer wykonuje, aby skonfigurować gniazdo "nasłuchujące": socket(), 
+bind(), listen(), accept(). Gniazdo odsłuchowe robi dokładnie to, co 
+dosłownie oznacza: nasłuchuje połączeń od klientów. Gdy klient się 
+łączy, serwer wywołuje <i>accept()</i> do zaakceptowania lub zakończenia połączenia. Klient wywołuje <i>connect()</i>
+ aby ustanowić połączenie z serwerem i zainicjować potrójny "uścisk 
+dłoni" (handshake). Krok uzgadniania jest ważny, ponieważ zapewnia, że 
+każda strona połączenia jest osiągalna w sieci, innymi słowy, że klient 
+może połączyć się z serwerem i odwrotnie. Może się zdarzyć, że tylko 
+jeden host, klient lub serwer może wysłać pakiety danych do drugiego. W 
+środku znajduje się sekcja działająca w obie strony, w której dane są 
+wymieniane między klientem a serwerem za pomocą połączeń z 
+wykorzystaniem <i>send()</i> i <i>recv()</i>. Na dole klient i serwer zamykają gniazda przy użyciu <i>close()</i>.
+</p>
+
+
+
+<h2 id="h2_4"><a class="up" href="#" title="Powrót do góry">▲</a>Klient i serwer Echo</h2>
+
+<p>Po zaprezentowaniu przeglądu interfejsu API gniazda i sposobu 
+komunikacji klienta i serwera, stwórzmy naszego pierwszego klienta i 
+serwer, zaczniemy od prostej implementacji. Serwer po prostu powtórzy 
+to, co otrzyma z powrotem do klienta. Poniżej znajduje się kod dla 
+serwera Echo:</p>
+
+<pre><code class="python hljs"><span class="hljs-comment">#!/usr/bin/env python3</span>
+
+<span class="hljs-keyword">import</span> socket
+
+HOST = <span class="hljs-string">'127.0.0.1'</span>  <span class="hljs-comment"># Standard loopback interface address (localhost)</span>
+PORT = <span class="hljs-number">65432</span>        <span class="hljs-comment"># Port to listen on (non-privileged ports are &gt; 1023)</span>
+
+<span class="hljs-keyword">with</span> socket.socket(socket.AF_INET, socket.SOCK_STREAM) <span class="hljs-keyword">as</span> s:
+    s.bind((HOST, PORT))
+    s.listen()
+    conn, addr = s.accept()
+    <span class="hljs-keyword">with</span> conn:
+        print(<span class="hljs-string">'Connected by'</span>, addr)
+        <span class="hljs-keyword">while</span> <span class="hljs-literal">True</span>:
+            data = conn.recv(<span class="hljs-number">1024</span>)
+            <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> data:
+                <span class="hljs-keyword">break</span>
+            conn.sendall(data)
+</code></pre>
+
+<p>Przejrzyjmy każde wywołanie API i zobaczmy, co się dzieje: <i>socket.socket()</i> tworzy obiekt gniazda, który obsługuje <a href="https://docs.python.org/3/reference/datamodel.html#context-managers" target="_blank">typ menedżera kontekstu</a>, dzięki czemu można go użyć w instrukcji <i>with</i>. Nie ma też potrzeby wywoływać s.close():</p>
+
+<pre><code class="python hljs"><span class="hljs-keyword">with</span> socket.socket(socket.AF_INET, socket.SOCK_STREAM) <span class="hljs-keyword">as</span> s:
+    <span class="hljs-keyword">pass</span>  <span class="hljs-comment"># Use the socket object without calling s.close().</span>
+</code></pre>
+
+<p>Argumenty przekazane do <i>socket()</i> określają rodzinę adresów i 
+typ gniazda. AF_INET to rodzina adresów internetowych dla protokołu 
+IPv4, SOCK_STREAM jest typem gniazda TCP, protokołu, który będzie 
+używany do transportu naszych wiadomości w sieci. Metoda <i>bind()</i> służy do powiązania gniazda z określonym interfejsem sieciowym i numerem portu:</p>
+
+<table>
+<thead><tr><td>Address Family</td><td>Protocol</td><td>Address Tuple</td><td>Description</td></tr></thead>
+<tbody><tr><td>socket.AF_INET</td><td>IPv4</td><td>(host, port)</td><td><i><b>host</b></i> is a string with a hostname like 'www.example.com' or an IPv4 address like '10.1.2.3', <i><b>port</b></i> is an integer.</td></tr>
+<tr><td>socket.AF_INET6</td><td>IPv6</td><td>(host, port, flowinfo, scopeid)</td><td><i><b>host</b></i> is a string with a hostname like 'www.example.com' or an IPv6 address like 'fe80::6203:7ab:fe88:9c23', <i><b>port</b></i> is an integer. flowinfo and scopeid represent the sin6_flowinfo and sin6_scope_id members in the C struct sockaddr_in6.</td></tr>
+</tbody></table>
+
+<pre><code class="python hljs">HOST = <span class="hljs-string">'127.0.0.1'</span>  <span class="hljs-comment"># Standard loopback interface address (localhost)</span>
+PORT = <span class="hljs-number">65432</span>        <span class="hljs-comment"># Port to listen on (non-privileged ports are &gt; 1023)</span>
+
+<span class="hljs-comment"># ...</span>
+
+s.bind((HOST, PORT))
+</code></pre>
+
+<p>Wartości przekazywane do <i>bind()</i> zależą od rodziny adresów gniazda. W tym przykładzie używamy <i>socket.AF_INET</i>
+ (IPv4), dlatego argumentem jest 2-krotka: (host, port), gdzie "host" 
+może być nazwą hosta, adresem IP lub pustym ciągiem. Jeśli używany jest 
+adres IP, "host" powinien być ciągiem adresu w formacie IPv4. Adres IP 
+127.0.0.1 jest standardowym adresem IPv4 interfejsu pętli zwrotnej 
+(loopback), więc tylko procesy na hoście będą mogły połączyć się z 
+serwerem. Jeśli przekażesz pusty ciąg, serwer zaakceptuje połączenia na 
+wszystkich dostępnych interfejsach IPv4. Parametr "port" powinien być 
+liczbą całkowitą od 1 do 65535(0 jest zarezerwowana). Jest to numer 
+portu TCP do przyjmowania połączeń od klientów. Niektóre systemy mogą 
+wymagać uprawnień administratora, jeśli port jest &lt; 1024. Metoda <i>listen()</i> umożliwia serwerowi zaakceptowanie (metoda <i>accept()</i>) połączenia. Powoduje to, że gniazdo jest "nasłuchujące":
+</p>
+
+<pre><code class="python hljs">s.listen()
+conn, addr = s.accept()
+</code></pre>
+
+<p>Metoda <i>listen()</i> ma parametr "backlog". Określa on liczbę 
+nieakceptowanych połączeń, na które zezwoli system przed odrzuceniem 
+nowych połączeń. Począwszy od Pythona 3.5, jest opcjonalny. Jeśli nie 
+zostanie określony, wybierana jest wartość domyślna. Jeśli serwer 
+odbiera wiele żądań połączeń jednocześnie, zwiększenie wartości 
+"backlog" może pomóc, ustawiając maksymalną długość kolejki dla 
+oczekujących połączeń. Maksymalna wartość zależy od systemu.</p>
+
+<p>Metoda <i>accept()</i> blokuje i czeka na połączenie przychodzące. 
+Kiedy klient łączy się, zwraca nowy obiekt gniazda reprezentujący 
+połączenie oraz krotkę z adresem klienta. Krotka będzie zawierać (host, 
+port) dla połączenia IPv4 lub (host, port, flowinfo, scopeid) dla IPv6. 
+Zobacz Rodziny adresów gniazd w sekcji odniesienia, aby uzyskać 
+szczegółowe informacje na temat krotek. Mamy teraz nowy obiekt gniazda 
+zwrócony przez <i>accept()</i>. Jest to ważne, ponieważ jest to gniazdo 
+używane do komunikacji z klientem. Różni się od gniazda nasłuchiwania 
+używanego przez serwer do przyjmowania nowych połączeń:</p>
+
+<pre><code class="python hljs">conn, addr = s.accept()
+<span class="hljs-keyword">with</span> conn:
+    print(<span class="hljs-string">'Connected by'</span>, addr)
+    <span class="hljs-keyword">while</span> <span class="hljs-literal">True</span>:
+        data = conn.recv(<span class="hljs-number">1024</span>)
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> data:
+            <span class="hljs-keyword">break</span>
+        conn.sendall(data)
+</code></pre>
+
+<p>Po otrzymaniu obiektu gniazda "conn" z <i>accept()</i>, nieskończona pętla "while" jest używana do wywołań <i>conn.recv()</i> w trybie blocking. Odczytuje wszystkie dane wysyłane przez klienta i powtarza je za pomocą <i>conn.sendall()</i>. Jeśli <i>conn.recv()</i> zwróci pusty objekt typu <i>bytes</i>
+ (b''), wtedy klient zamyka połączenie i pętla jest zakończona. Słowo 
+kluczowe "with" jest używane razem z "conn" do automatycznego zamykania 
+gniazda na końcu bloku.</p>
+
+
+
+<h2 id="h2_5"><a class="up" href="#" title="Powrót do góry">▲</a>Klient Echo</h2>
+
+<p>Kod klienta (echo_client.py) może wyglądać następująco:</p>
+
+<pre><code class="python hljs"><span class="hljs-comment">#!/usr/bin/env python3</span>
+
+<span class="hljs-keyword">import</span> socket
+
+HOST = <span class="hljs-string">'127.0.0.1'</span>  <span class="hljs-comment"># The server's hostname or IP address</span>
+PORT = <span class="hljs-number">65432</span>        <span class="hljs-comment"># The port used by the server</span>
+
+<span class="hljs-keyword">with</span> socket.socket(socket.AF_INET, socket.SOCK_STREAM) <span class="hljs-keyword">as</span> s:
+    s.connect((HOST, PORT))
+    s.sendall(<span class="hljs-string">b'Hello, world'</span>)
+    data = s.recv(<span class="hljs-number">1024</span>)
+
+print(<span class="hljs-string">'Received'</span>, repr(data))
+</code></pre>
+
+<p>W porównaniu z serwerem klient jest dość prosty. Tworzy obiekt gniazda, łączy się z serwerem i wywołuje <i>s.sendall()</i> aby wysłać swoją wiadomość. Na koniec wywołuje <i>s.recv()</i>, żeby odczytać odpowiedź serwera, a następnie wyświetla ją.</p>
+
+<h3>Uruchamianie klienta i serwera Echo</h3>
+
+<p>Uruchommy klienta i serwer, aby zobaczyć jak się zachowują i 
+sprawdzić co się dzieje. Należy uruchomić terminal lub wiersz poleceń, 
+przejść do katalogu zawierającego skrypty i uruchomić serwer:</p>
+
+<pre><code class="shell hljs"><span class="hljs-meta">$</span><span class="bash"> ./echo_server.py</span>
+</code></pre>
+
+<p>Po uruchomieniu terminal będzie wyglądał na zawieszony. Jest tak, 
+ponieważ serwer jest uśpiony w trybie blokownia (blocking mode) dla 
+następującego wywołania:</p>
+
+<pre><code class="python hljs">conn, addr = s.accept()
+</code></pre>
+
+<p>Serwer czeka na połączenie klienta. Teraz należy otworzyć inne okno terminala lub wiersz polecenia i uruchomić klienta:</p>
+
+<pre><code class="shell hljs"><span class="hljs-meta">$</span><span class="bash"> ./<span class="hljs-built_in">echo</span>-client.py </span>
+Received b'Hello, world'
+</code></pre>
+
+<p>W oknie serwera powinno pojawić się:</p>
+
+<pre><code class="shell hljs"><span class="hljs-meta">$</span><span class="bash"> ./echo_server.py </span>
+Connected by ('127.0.0.1', 64623)
+</code></pre>
+
+<p>Na powyższym wyniku serwer wydrukował krotkę "addr" zwróconą przez <i>s.accept()</i>. Jest to adres IP klienta i numer portu TCP. Numer portu 64623 najprawdopodobniej będzie inny po uruchomieniu go na komputerze.</p>
+
+<h3>Wyświetlanie stanu gniazda</h3>
+
+<p>Aby zobaczyć bieżący stan gniazd na hoście, można użyć polecenia <i>netstat</i>. Jest domyślnie dostępne w systemach macOS, Linux i Windows. Oto przykładowe dane wyjściowe po uruchomieniu serwera:</p>
+
+<pre><code class="shell hljs"><span class="hljs-meta">$</span><span class="bash"> netstat -an</span>
+Active Internet connections (including servers)
+Proto Recv-Q Send-Q  Local Address          Foreign Address        (state)
+tcp4       0      0  127.0.0.1.65432        *.*                    LISTEN
+</code></pre>
+
+<p>Należy zauważyć, że <i>Local Address</i> to 127.0.0.1.65432. Gdyby <i>echo_server.py</i> używał HOST = '' zamiast HOST = '127.0.0.1', <i>netstat</i> pokazałby:</p>
+
+<pre><code class="shell hljs"><span class="hljs-meta">$</span><span class="bash"> netstat -an</span>
+Active Internet connections (including servers)
+Proto Recv-Q Send-Q  Local Address          Foreign Address        (state)
+tcp4       0      0  *.65432                *.*                    LISTEN
+</code></pre>
+
+<p>Local Address *.65432 oznacza, że wszystkie dostępne interfejsy hosta
+ obsługujące rodzinę adresów będą używane do akceptowania połączeń 
+przychodzących. W tym przykładzie, w wywołaniu <i>socket()</i> został użyty parametr <i>socket.AF_INET</i>
+ odpowiadający protokołowi IPv4. Można to zobaczyć w kolumnie "Proto": 
+tcp4. W powyższym przykładzie pokazane zostały tylko dane dla serwera 
+echa (pozostałe dane zostały usunięte). Prawdopodobnie polecenie <i>netstat -an</i> pokaże znacznie więcej danych wyjściowych, w zależności od systemu, na którym zostanie uruchomiony, W powyższym przykładzie <i>netstat</i>
+ pokazuje, że serwer echa używa gniazda TCP IPv4 (tcp4), na porcie 65432
+ we wszystkich interfejsach (*.65432) i jest w stanie nasłuchiwania 
+(LISTEN). Innym sposobem, aby to zobaczyć, wraz z dodatkowymi pomocnymi 
+informacjami, jest polecenie <i>lsof</i> pokazujące listę otwartych 
+plików. Jest ono domyślnie dostępne w systemie macOS i można je 
+zainstalować w systemie Linux za pomocą menedżera pakietów. Przykładowy 
+wynik działania dla procesu serwera echa:</p>
+
+<pre><code class="shell hljs"><span class="hljs-meta">$</span><span class="bash"> lsof -i -n</span>
+COMMAND     PID   USER   FD   TYPE   DEVICE SIZE/OFF NODE NAME
+Python    67982 nathan    3u  IPv4 0xecf272      0t0  TCP *:65432 (LISTEN)
+</code></pre>
+
+<p><i>lsof</i> z opcją <i>-i</i> pokazuje COMMAND, PID (identyfikator procesu) i USER (identyfikator użytkownika) dla otwartych gniazd sieciowych. Polecenia <i>netstat</i> i <i>lsof</i>
+ posiadają wiele opcji, które różnią się w zależności od systemu 
+operacyjnego, na którym są uruchamiane. Więcej informacji na temat ich 
+użycia można znaleźć na stronach z dokumentacją (wersja dla systemu 
+Linux): <a href="https://www.man7.org/linux/man-pages/man8/netstat.8.html" target="_blank">tutaj</a> oraz <a href="https://www.man7.org/linux/man-pages/man8/lsof.8.html" target="_blank">tutaj</a>. Poniżej przykład typowego błędu, gdy nastąpi próba połączenia z portem bez gniazda nasłuchującego:</p>
+
+<pre><code class="shell hljs"><span class="hljs-meta">$</span><span class="bash"> ./<span class="hljs-built_in">echo</span>-client.py </span>
+Traceback (most recent call last):
+  File "./echo-client.py", line 9, in 
+    s.connect((HOST, PORT))
+ConnectionRefusedError: [Errno 61] Connection refused
+</code></pre>
+
+<p>Podany numer portu jest nieprawidłowy lub serwer nie działa. A może 
+na ścieżce jest zapora blokująca połączenie, o której łatwo zapomnieć. 
+Można także zobaczyć błąd <i>Connection timed out</i>. W takim przypadku
+ trzeba dodać regułę zapory, która pozwala klientowi połączyć się z 
+portem TCP. Poniżej znajduje się tabela przedstawiająca listę typowych 
+błędów .</p>
+
+
+<table>
+<thead><tr><td>Exception</td><td><i>errno</i> constant</td><td>Description</td></tr></thead>
+<tbody><tr><td>BlockingIOError</td><td>EWOULDBLOCK</td><td>Resource 
+temporarily unavailable. For example, in non-blocking mode, when calling
+ send() and the peer is busy and not reading, the send queue (network 
+buffer) is full. Or there are issues with the network. Hopefully this is
+ a temporary condition.</td></tr>
+<tr><td>OSError</td><td>EADDRINUSE</td><td>Address already in use. Make 
+sure there’s not another process running that’s using the same port 
+number and your server is setting the socket option SO_REUSEADDR: 
+socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1).</td></tr>
+<tr><td>ConnectionResetError</td><td>ECONNRESET</td><td>Connection reset
+ by peer. The remote process crashed or did not close its socket 
+properly (unclean shutdown). Or there’s a firewall or other device in 
+the network path that’s missing rules or misbehaving.</td></tr>
+<tr><td>TimeoutError</td><td>ETIMEDOUT</td><td>Operation timed out. No response from peer.</td></tr>
+<tr><td>ConnectionRefusedError</td><td>ECONNREFUSED</td><td>Connection refused. No application listening on specified port.</td></tr>
+</tbody></table>
+
+
+
+<h2 id="h2_6"><a class="up" href="#" title="Powrót do góry">▲</a>Komunikacja klient-serwer</h2>
+
+<p>Przyjrzyjmy się bliżej, w jaki sposób klient i serwer komunikują się ze sobą:</p>
+
+<div class="img" alt="Rys. 2. Komunikacja klient-serwer poprzez interfejs loopback" title="Rys. 2. Komunikacja klient-serwer poprzez interfejs loopback"><img class="frame center" src="Programowanie%20w%20Pythonie%20w%20%C5%9Brodowisku%20sieciowym%20(cz.%201)_files/sockets_loopback_interface.jpg"></div>
+<div class="img_text">Rys. 2. Komunikacja klient-serwer poprzez interfejs loopback</div>
+
+<p>Podczas korzystania z interfejsu pętli zwrotnej (adres IPv4 127.0.0.1
+ lub adres IPv6 ::1), dane nigdy nie opuszczają hosta i nie przechodzą 
+do sieci zewnętrznej. Na powyższym schemacie interfejs loopback jest 
+zawarty w hoście. Reprezentuje to wewnętrzną naturę interfejsu pętli 
+zwrotnej, a połączenia i przesyłane przez niego dane są lokalne dla 
+hosta. Dlatego zarówno interfejs pętli zwrotnej i adres IP 127.0.0.1 lub
+ ::1 określany jest jako "localhost". Aplikacje używają interfejsu pętli
+ zwrotnej do komunikowania się z innymi procesami działającymi na hoście
+ oraz dla bezpieczeństwa i izolacji od sieci zewnętrznej, ponieważ jest 
+on dostępny tylko z poziomu hosta. Można to zobaczyć w działaniu, jeśli 
+np. uruchomiony jest serwer aplikacji, który korzysta z własnej 
+prywatnej bazy danych. Jeśli nie jest to baza danych używana przez inne 
+serwery, prawdopodobnie jest skonfigurowana do nasłuchiwania połączeń 
+tylko na interfejsie pętli zwrotnej. W takim przypadku inne hosty w 
+sieci nie mogą się z nim połączyć.</p>
+
+<p>Gdy używa się adresu IP innego niż 127.0.0.1 lub ::1 w swoich 
+aplikacjach, prawdopodobnie jest on przypisany do interfejsu Ethernet, 
+który z kolei jest podłączony do sieci zewnętrznej. Pełni on rolę 
+"bramy" do innych hostów spoza lokalnego otoczenia:</p>
+
+<div class="img" alt="Rys. 3. Procesy klienta i serwera korzystające z interfejsów Ethernet" title="Rys. 3. Procesy klienta i serwera korzystające z interfejsów Ethernet"><img class="frame center" src="Programowanie%20w%20Pythonie%20w%20%C5%9Brodowisku%20sieciowym%20(cz.%201)_files/sockets_ethernet_interface.jpg"></div>
+<div class="img_text">Rys. 3. Procesy klienta i serwera korzystające z interfejsów Ethernet</div>
+
+
+
+
+</body></html>
