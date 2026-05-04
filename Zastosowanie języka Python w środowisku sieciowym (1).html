@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pl"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Zastosowanie języka Python w środowisku sieciowym (1)</title>
+<link rel="stylesheet" type="text/css" media="all" href="Zastosowanie%20j%C4%99zyka%20Python%20w%20%C5%9Brodowisku%20sieciowym%20(1)_files/jquery-ui.css">
+<link rel="stylesheet" type="text/css" media="all" href="Zastosowanie%20j%C4%99zyka%20Python%20w%20%C5%9Brodowisku%20sieciowym%20(1)_files/styles.css">
+<link rel="stylesheet" type="text/css" media="all" href="Zastosowanie%20j%C4%99zyka%20Python%20w%20%C5%9Brodowisku%20sieciowym%20(1)_files/highlight.min.css">
+<script type="text/javascript" src="Zastosowanie%20j%C4%99zyka%20Python%20w%20%C5%9Brodowisku%20sieciowym%20(1)_files/jquery.js"></script>
+<script type="text/javascript" src="Zastosowanie%20j%C4%99zyka%20Python%20w%20%C5%9Brodowisku%20sieciowym%20(1)_files/jquery-ui.js"></script>
+<script type="text/javascript" src="Zastosowanie%20j%C4%99zyka%20Python%20w%20%C5%9Brodowisku%20sieciowym%20(1)_files/main.js"></script>
+<script type="text/javascript" src="Zastosowanie%20j%C4%99zyka%20Python%20w%20%C5%9Brodowisku%20sieciowym%20(1)_files/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<style>
+table.chess_figures {
+	margin: 2em auto;
+}
+
+table.chess_figures tr.figures td {
+	background-image: url(img/python/chess_figures.png);
+	width: 860px;
+	height: 120px;
+}
+
+table.chess_figures tr.white td {
+	background-position: 0px -30px;
+}
+
+table.chess_figures tr.black td {
+	background-position: 0px -170px;
+}
+
+table.chess_figures tr.txt td {
+	width: 85px;
+	padding: 0;
+	text-align: center;
+	background-color: #ccc;
+}
+
+table.tab3 tbody tr td:first-child {
+	background-color: #ccc;
+	text-align: center;
+	font-weight: bold;
+}
+</style>
+</head>
+<body>
+<h1>Zastosowanie języka Python w środowisku sieciowym (1)</h1>
+
+<h2 id="h2_1">Informacje wstępne</h2>
+<p>
+Celem poniższych ćwiczeń jest zapoznanie się z zastosowaniem języka 
+Python do tworzenia prostych aplikacji w sieci. Wszystkie ćwiczenia 
+dotyczą sytuacji, w której utworzone jest pojedyncze połączenie klienta z
+ serwerem opisane <a href="http://server.s308/z/t_python_sieci_1.html" target="_blank">tutaj</a>.
+ Można tam też znaleźć "szkielety" skryptów odpowiedzialnych za 
+funkcjonowanie aplikacji zarówno serwera jak i klienta, których relacje w
+ przypadku korzystania wyłącznie z interfejsu loopback można przedstawić
+ na poniższym rysunku (przykład dla protokołu TCP oraz portu 65432):
+
+</p><div class="img" alt="Rys. 1. Komunikacja klient-serwer poprzez interfejs loopback" title="Rys. 1. Komunikacja klient-serwer poprzez interfejs loopback"><img src="Zastosowanie%20j%C4%99zyka%20Python%20w%20%C5%9Brodowisku%20sieciowym%20(1)_files/sockets_loopback_interface.jpg"></div>
+<div class="img_text">Rys. 1. Komunikacja klient-serwer poprzez interfejs loopback</div>
+
+<!--div class="img"><img class="frame" src="img/pvst_sch.png" alt="Rys. 1" title="Rys. 1"/></div>
+<div class="img_text">abc</div-->
+
+<p></p>
+
+<p>
+W tym modelu należy wykonać wszystkie poniższe ćwiczenia, realizując 
+zadane funkcjonalności w formie sformatowanych zapytań. Składnia każdego
+ zapytania będzie charakterystyczna dla danego ćwiczenia, przy czym 
+wspólny będzie zapis dotyczący argumentów zapytania, gdzie nawiasy 
+klamrowe (np. <i>{arg1}</i>) oznaczają argumenty obligatoryjne, natomiast nawiasy kwadratowe (np. <i>[arg2]</i>) oznaczają argumenty opcjonalne. Po wpisaniu działania, które nie istnieje, serwer powinien zwrócić ciąg znaków <b><i>not found</i></b>.
+</p>
+
+<p>
+Można stosować dowolne techniki programistyczne (również programowanie 
+obiektowe). Ważny jest efekt działania zgodny z opisem dla danego 
+ćwiczenia.
+</p>
+
+
+
+<h2 id="h2_2">Ćwiczenie 1</h2>
+<p>
+Należy utworzyć aplikację klient-serwer, która realizuje proste 
+działania arytmetyczne dodawania, odejmowania, mnożenia oraz dzielenia. 
+Jak widać w poniższej tabeli, każde zapytanie powinno posiadać 
+przynajmniej 2 argumenty, w przeciwnym wypadku serwer powinien zwrócić 
+ciąg znaków "too few args".
+
+</p><table class="tab3">
+<thead><tr><td>Działanie</td><td>Format zapytania</td><td>Opis</td></tr></thead>
+<tbody>
+<tr><td>add</td><td>add {arg1} {arg2} [arg3] [arg4] ...</td><td>Dodawanie</td></tr>
+<tr><td>subtract</td><td>subtract {arg1} {arg2} [arg3] [arg4] ...</td><td>Odejmowanie</td></tr>
+<tr><td>multiply</td><td>multiply {arg1} {arg2} [arg3] [arg4] ...</td><td>Mnożenie</td></tr>
+<tr><td>divide</td><td>divide {arg1} {arg2} [arg3] [arg4] ...</td><td>Dzielenie</td></tr>
+</tbody>
+</table>
+
+Odpowiedzi od wszystkich zapytań powinny mieć postać liczby (całkowitej 
+lub zmiennoprzecinkowej), która jest wynikiem danego działania 
+arytmetycznego. Nie uwzględniamy dzielenia przez 0.
+<p></p>
+
+
+
+<h2 id="h2_3">Ćwiczenie 2</h2>
+<p>
+Należy utworzyć aplikację serwera w modelu klient-serwer, która zwraca kolejne liczby ciągu Fibonacciego od liczby nr <i><b>a</b></i> do liczby nr <i><b>b</b></i> włącznie. Liczby powinny być odseparowane od siebie znakiem spacji. Zgodnie z <a href="https://pl.wikipedia.org/wiki/Ci%C4%85g_Fibonacciego" target="_blank">opisem ciągu Fibonacciego</a> zakładamy, że pierwsza liczba tego ciągu to 0.
+
+</p><table class="tab3">
+<thead><tr><td>Działanie</td><td>Format zapytania</td><td>Opis</td></tr></thead>
+<tbody>
+<tr><td>fibo</td><td>fibo {a} {b}</td><td>a - pozycja początkowa ciągu<br>b - pozycja końcowa</td></tr>
+</tbody>
+</table>
+<p></p>
+
+
+
+<h2 id="h2_4">Sprawozdanie</h2>
+<p>
+Zadanie składa się z trzech ćwiczeń, przy czym ćwiczenie 3 jest dla 
+chętnych - wymagane do otrzymania ze sprawozdania oceny 5.0. W 
+sprawozdaniu powinny znaleźć się do każdego ćwiczenia:
+</p><ul>
+	<li>kod źródłowy serwera</li>
+	<li>wyniki wraz z przykładowymi wartościami dla wszystkich działań wyszczególnionych w tabeli</li>
+</ul>
+<p></p>
+
+
+
+<div style="padding: 2em; color: #aaa; font-style: italic; font-size: 0.8em; text-align: right;">
+© 2021 Przemysław Włodarski<br>
+lab. s.308, KPSiIM WE ZUT
+</div>
+
+
+
+</body></html>
