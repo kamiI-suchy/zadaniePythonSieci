@@ -33,7 +33,7 @@ def handle_request(request):
         a = int(args[0])
         b = int(args[1])
     except ValueError:
-        return 'too few args'
+        return 'invalid arguments'
 
     numbers = [str(fibonacci(i)) for i in range(a, b + 1)]
     return ' '.join(numbers)

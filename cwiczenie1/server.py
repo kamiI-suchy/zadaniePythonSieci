@@ -26,7 +26,7 @@ def handle_request(request):
     try:
         numbers = [float(x) for x in args]
     except ValueError:
-        return 'too few args'
+        return 'invalid arguments'
 
     if operation == 'add':
         result = sum(numbers)
@@ -35,7 +35,10 @@ def handle_request(request):
     elif operation == 'multiply':
         result = reduce(lambda a, b: a * b, numbers)
     elif operation == 'divide':
-        result = reduce(lambda a, b: a / b, numbers)
+        try:
+            result = reduce(lambda a, b: a / b, numbers)
+        except ZeroDivisionError:
+            return 'division by zero'
 
     if result == int(result):
         return str(int(result))
